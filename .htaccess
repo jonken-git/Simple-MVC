@@ -1,0 +1,24 @@
+<IfModule mod_rewrite.c>
+
+  RewriteEngine On
+  
+	#### Special 404 for images (not working. The idea was that 404 to images, like favicon should not load engine and 404 view, but only a simple static page with status code 404)
+	#RewriteCond %{REQUEST_URI} \.(jpg|jpeg|gif|png|ico)$ [NC]
+	#RewriteCond %{REQUEST_FILENAME} !-f
+	#RewriteCond %{REQUEST_FILENAME} !-d
+	#RewriteRule .*$ /index.php [QSA,L]
+
+  Options -Multiviews
+  #Allow version numbers in css and JS
+  RewriteRule ^(.*)\(.*?\)\.(css|js)$ $1.$2 [L]
+
+  #RewriteBase /public_html
+
+  # If surfing to something that is not a directory or file - go to index/mvc-core
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
+
+  #RewriteRule ^index\.php/([a-zA-Z0-9_-]+)/method/param$ /index.php?url=$1 [QSA,L]
+
+</IfModule>
