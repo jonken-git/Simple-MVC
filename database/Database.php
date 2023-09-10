@@ -1,4 +1,5 @@
 <?php
+require_once(__CONFIG__ . "database.php");
 
 class Database
 {
@@ -15,12 +16,12 @@ class Database
         $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
-    public function selectById(string $model, int $id)
+    public function find(string $model, int $id)
     {
         $stmt = $this->conn->prepare("SELECT * FROM " . $model . " WHERE id = :id");
         $stmt->execute(["id" => $id]);
         $res = $stmt->fetch(PDO::FETCH_ASSOC);
-        $user = $model::create($model, $res);
+        $user = $model::create($res);
         return $user;
     }
 

@@ -22,6 +22,7 @@ class Server
             self::$instance->controller->request = self::$instance->request;
             self::$instance->controller->$endpoint();
         } catch(Error $e) {
+            dd($e);
             $endpoint = "index";
             $view = self::$instance->createViewPath("Errors", $endpoint);
             self::$instance->controller = new Errors($view);

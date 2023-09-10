@@ -12,5 +12,10 @@ trait Singleton
         return self::$instance;
     }
 
+    public static function getInstance(): static
+    {
+        return self::createInstance();
+    }
+
     private static ?self $instance = null;
 }

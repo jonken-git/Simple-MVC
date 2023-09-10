@@ -11,18 +11,9 @@ class Users extends Controller
 
     public function profile(int $id) : void
     {
-        $u = User::getInstance();
-        $p = Post::getInstance();
-        $user = new class {
-            public int $id;
-            public string $username;
-            function __construct()
-            {
-                $this->id = 1;
-                $this->username = "JonKen";
-            }
-        };
-        $user->id = $id;
+        $user = User::find($id);
+        $post = Post::find(1); 
+        dd([$user, $post]);
         $this->renderView(["user" => $user, "title" => "Profile"]);
     }
 
