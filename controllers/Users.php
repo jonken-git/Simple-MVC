@@ -20,12 +20,12 @@ class Users extends Controller
     public function list(): void
     {
         $users = User::all();
-        dd($users);
-        $this->renderView(["title" => "Userlist", "users" => []]);
+        $this->renderView(["title" => "Userlist", "users" => $users]);
     }
-    public function my_profile(string $name) : void
+    public function my_profile() : void
     {
-        // $this->renderView(["user" => $user, "title" => "My profile"]);
+        $user = User::find(1);
+        $this->renderView(["user" => $user, "title" => "My profile"]);
     }
 
 }
