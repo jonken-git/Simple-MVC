@@ -26,6 +26,13 @@ class Users extends Controller
         $this->renderView(["user" => $user, "title" => "Profile"]);
     }
 
+    public function list(): void
+    {
+        $this->renderView([
+            "title" => "Userlist",
+            "users" => ["Jon", "Ken", "Doe"]
+        ]);
+    }
     public function my_profile(string $name) : void
     {
         // $this->renderView(["user" => $user, "title" => "My profile"]);

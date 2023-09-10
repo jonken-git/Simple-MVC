@@ -2,41 +2,15 @@
 abstract class Controller
 {
     public array $viewData = [];
-    public static array $reservedEndpoints = [
-        "",
-        "sign-in",
-        "sign-out",
-        "sign-up",
-        "forgot-password",
-        "reset-password",
-    ];
-
 
     public final function __construct(string $view)
     {
         $this->view = $view;
     }
 
-    private function loadModel(): void
-    {
-    }
-
-    private function prepareView(): void
-    {
-    }
-
-    private function callEndpointMethod(): void
-    {
-    }
-
-    private function setView(?string $view = null): void
-    {
-    }
-
     protected function renderView(array $viewData = []): void
     {
         ob_clean();
-
         $this->validateViewData($viewData);
         foreach ($viewData as $key => $value) {
             $$key = $value;
@@ -54,6 +28,6 @@ abstract class Controller
         }
     }
 
-    private string $view;
-    protected string $requestMethod;
+    private readonly string $view;
+    protected readonly string $requestMethod;
 }

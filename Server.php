@@ -22,9 +22,18 @@ class Server
             self::$instance->controller->request = self::$instance->request;
             self::$instance->controller->$endpoint();
         } catch(Error $e) {
-            dd(["FATAL ERROR" => $e]);
+            $endpoint = "index";
+            $view = self::$instance->createViewPath("Errors", $endpoint);
+            self::$instance->controller = new Errors($view);
+            self::$instance->controller->request = self::$instance->request;
+            self::$instance->controller->$endpoint();
         }
         self::close();
+    }
+
+    private static function prepareErrorView(): void
+    {
+
     }
 
     private static function close(): void
@@ -33,7 +42,7 @@ class Server
         die();
     }
 
-    private static function instantiateController()
+    private static function instantiateController(): void
     {
         $controller = self::$instance->request->getControllerName();
         $controller = ucfirst($controller);
