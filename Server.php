@@ -2,6 +2,7 @@
 
 class Server
 {
+    use Singleton;
 
     private function __construct() {}
 
@@ -20,6 +21,8 @@ class Server
             self::$instance->controller = new Errors($view);
             self::$instance->controller->request = self::$instance->request;
             self::$instance->controller->$endpoint();
+        } catch(Error $e) {
+            dd(["FATAL ERROR" => $e]);
         }
         self::close();
     }
@@ -92,7 +95,6 @@ class Server
 
     private Request $request;
     private Controller $controller;
-    private static ?self $instance = null;
 }
 
 class Request

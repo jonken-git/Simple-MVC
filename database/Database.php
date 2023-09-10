@@ -6,7 +6,6 @@ class Database
 
     public function __construct()
     {
-
         $hostName = DatabaseConf::HOST->value;
         $dbName   = DatabaseConf::DATABASE_NAME->value;
         $username = DatabaseConf::USERNAME->value;

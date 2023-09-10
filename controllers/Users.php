@@ -11,6 +11,8 @@ class Users extends Controller
 
     public function profile(int $id) : void
     {
+        $u = User::getInstance();
+        $p = Post::getInstance();
         $user = new class {
             public int $id;
             public string $username;
