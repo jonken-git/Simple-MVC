@@ -15,6 +15,10 @@ abstract class Model
     public static function create(array $data): static
     {
         $model = new static();
+        if($model::$columns == null || empty($model::$columns) || !is_array($model::$columns))
+        {
+            throw new Exception("$model::\$columns is not set");
+        }
         foreach($model::$columns as $column)
         {
             $model->$column = $data[$column];
@@ -22,7 +26,7 @@ abstract class Model
         return $model;
     }
 
-    public static function getInstance(): static
+    private static function getInstance(): static
     {
         $class = get_called_class();
         if(!isset(self::$instances[$class]))
@@ -34,8 +38,15 @@ abstract class Model
 
     public static function find(int $id): static
     {
-        $class = get_called_class();
-        $result = self::$db->find($class, $id);
+        $model = self::getInstance();
+        $result = self::$db->find($model::class, $id);
+        return $result;
+    }
+
+    public static function all(): array
+    {
+        $model = self::getInstance();
+        $result = self::$db->all($model::class);
         return $result;
     }
 }

@@ -139,13 +139,16 @@ class Request
         $getParamsStart = strpos($request, "?");
         $request = $getParamsStart === false ? $request : substr($request, 0, $getParamsStart);
         $request = explode("/", $request);
-        array_shift($request);
+        $request = array_values(array_filter($request));
+        // dd($request);
+        // array_shift($request);
         if(in_array($request[0], self::$reservedEndpoints))
         {
             $request[2] = $request[1]; // Move param from endpoint name to param position
             $request[1] = $request[0] == "" ? "index" : $request[0]; 
             $request[0] = "home";
         }
+        $request[1] ??= "index";
         $this->request = $request;
     }
 
