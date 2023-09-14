@@ -18,7 +18,7 @@ class Server
             require_once(__CONTROLLERS__ . "Errors.php");
             $endpoint = $e->getEndpointName();
             $view = self::$instance->createViewPath("Errors", $endpoint);
-            self::$instance->controller = new Errors($view);
+            self::$instance->controller = new Errors($view, $e);
             self::$instance->controller->request = self::$instance->request;
             self::$instance->controller->$endpoint();
         } catch(Error $e) {

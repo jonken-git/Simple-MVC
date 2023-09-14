@@ -5,23 +5,31 @@ abstract class Model
 
     protected static Database $db;
     private static array $instances = [];
-    protected static array $columns;
+    protected static array $required;
+    protected static array $optional;
 
-    public final function __construct()
+    private final function __construct()
     {
         self::$db = Database::getInstance(); 
     }
 
-    public static function create(array $data): static
+    private static function create(array $data): static
     {
         $model = new static();
-        if($model::$columns == null || empty($model::$columns) || !is_array($model::$columns))
+        if($model::$required == null || empty($model::$required) || !is_array($model::$required))
         {
             throw new Exception("$model::\$columns is not set");
         }
-        foreach($model::$columns as $column)
+        foreach($model::$required as $column)
         {
             $model->$column = $data[$column];
+        }
+        foreach($model::$optional as $column)
+        {
+            if(isset($data[$column]))
+            {
+                $model->$column = $data[$column];
+            }
         }
         return $model;
     }
@@ -40,14 +48,19 @@ abstract class Model
     {
         $model = self::getInstance();
         $result = self::$db->find($model::class, $id);
-        return $result;
+        return $model::create($result);
     }
 
     public static function all(): array
     {
         $model = self::getInstance();
         $result = self::$db->all($model::class);
-        return $result;
+        return array_map(fn($data) => $model::create($data), $result);
+    }
+
+    public static function join(string $join, string $on): ?array
+    {
+        die(__CLASS__ . "::" . __FUNCTION__ . " not implemented");
     }
 }
 

@@ -3,9 +3,10 @@ abstract class Controller
 {
     public array $viewData = [];
 
-    public final function __construct(string $view)
+    public final function __construct(string $view, ?Exception $error = null)
     {
         $this->view = $view;
+        $this->error = $error;
     }
 
     protected function renderView(array $viewData = []): void
@@ -28,6 +29,13 @@ abstract class Controller
         }
     }
 
+    public function setError(Error $error): void
+    {
+        $this->error = $error;
+    }
+
+
     private readonly string $view;
+    public readonly ?Exception $error;
     protected readonly string $requestMethod;
 }

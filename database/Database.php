@@ -16,27 +16,19 @@ class Database
         $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
-    public function find(string $model, int $id): ?Model
+    // Returns bool === false on failure
+    public function find(string $model, int $id): ?array
     {
         $stmt = $this->conn->prepare("SELECT * FROM " . $model . " WHERE id = :id");
         $stmt->execute(["id" => $id]);
-        $res = $stmt->fetch(PDO::FETCH_ASSOC);
-        if($res) {
-            $res = $model::create($res);
-        }
-        return $res;
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function all(string $model): ?array
     {
         $stmt = $this->conn->prepare("SELECT * FROM " . $model);
         $stmt->execute();
-        $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $users = [];
-        foreach ($res as $user) {
-            $users[] = $model::create($user);
-        }
-        return $users;
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public PDO $conn;
