@@ -1,2 +1,5 @@
 <?php
-dd($this->request, false);
+if(isLocal())
+{
+    dd($data, false);
+}

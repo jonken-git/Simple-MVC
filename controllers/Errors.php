@@ -5,9 +5,9 @@ class Errors extends Controller
 {
     public Request $request;
 
-    public function index()
+    public function index(Error $error)
     {
-        $this->renderView(["title" => "Hoppsan!"]);
+        $this->renderView(["title" => "Hoppsan!", "data" => $error]);
     }
 
     public function not_found()

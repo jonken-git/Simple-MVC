@@ -6,14 +6,15 @@ class Users extends Controller
 
     public function index() : void
     {
+        $user = User::selectWithPosts(1);
+        dd($user);
         $this->renderView(["title" => "Users"]);
     }
 
     public function profile(int $id) : void
     {
         $user = User::find($id);
-        $post = Post::find(1); 
-
+        $user->posts = Post::where("user_id = $id")->get();
         $this->renderView(["user" => $user, "title" => "Profile"]);
     }
 

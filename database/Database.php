@@ -16,6 +16,13 @@ class Database
         $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
+    public function query(string $query): ?array
+    {
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     // Returns bool === false on failure
     public function find(string $model, int $id): ?array
     {

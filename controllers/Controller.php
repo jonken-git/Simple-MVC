@@ -25,7 +25,7 @@ abstract class Controller
     private function validateViewData(array $viewData): void
     {
         if(!in_array("title", array_keys($viewData))) {
-            die("View data must contain a 'title' key");
+            throw new ValueError("View data must contain a 'title' key");
         }
     }
 
