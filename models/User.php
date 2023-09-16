@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @property int $id
+ * @property string $username
+ * @property string $email
+ * @property string $password
+ */
 class User extends Model
 {
     public ?int $id = null;
@@ -14,8 +20,6 @@ class User extends Model
     public static function selectWithPosts(int $id): User
     {
         return User::where("user.id = 1")
-            ::join("post", "user_id")
-            ::join("comment", "post_id", "post", "id")
             ::get();
     }
 }

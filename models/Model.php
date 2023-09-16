@@ -13,8 +13,28 @@ abstract class Model
     private array $where = [];
     private array $join = [];
     private array $joinTables = [];
+
+    /**
+     * @var array The children to select
+     */
+    private array $with = [];
+    /**
+     * @var bool Whether the query is joining tables
+     */
     private bool  $isJoining = false;
+    /**
+     * @var bool Whether the query has a where clause
+     */
     private bool  $isWhere = false;
+    /**
+     * @var bool Whether the query has a children
+     */
+    private bool  $isWith = false;
+
+    /**
+     * @var bool Whether the query is getting one or many results
+     */
+    private bool $isGetOne = false;
 
 
     private final function __construct()
@@ -56,14 +76,17 @@ abstract class Model
     }
 
     /**
-     * @param string $where The where clause (excluding "WHERE")
+     * @param string $column The column to search
+     * @param string $condition The condition to search for
+     * @param string $operator The operator to use (default: "=")
      * @return static The model instance for chaining
      */
-    public static function where(string $where): static
+    public static function where(string $column, string $condition, string $operator = "="): static
     {
         $model = self::getInstance();
         $model->isWhere = true;
-        $model->where[] = $where;
+        $condition = htmlspecialchars($condition);
+        $model->where[] = "{$column} {$operator} '{$condition}'";
         return $model;
     }
 
@@ -72,19 +95,32 @@ abstract class Model
      * @param string $table_1_column The column to join on
      * @param string|null $table_2 The table to join on (default: Callers table)
      * @param string|null $table_2_column The column to join on (default: "id")
+     * @param string|null $joinKind The kind of join (default: "LEFT JOIN")
      * @return static The model instance for chaining
      */
-    public static function join(string $table_1, string $table_1_column, ?string $table_2 = null, ?string $table_2_column = null): static
-    {
-        $model = self::getInstance();
-        $model->isJoining = true;
-        $table_2 = match($table_2) {
-            null => $model::$name . ".id",
-            default => "$table_2.$table_2_column"
+    public static function join(
+        string $table_1,
+        string $table_1_column,
+        ?string $table_2 = null,
+        ?string $table_2_column = null,
+        ?string $joinKind = null
+    ): static {
+        $instance = self::getInstance();
+        $instance->isJoining = true;
+        $join = "{$table_1}.{$table_1_column}";
+
+        $on = match([$table_2, $table_2_column]) {
+            [null, null] => $instance::$name . ".id",
+            default => "$table_2.{$table_2_column}"
         };
-        $model->joinTables[] = $table_1;
-        $model->join[] = "JOIN $table_1 ON $table_1.$table_1_column = $table_2";
-        return $model;
+
+        $instance->join[] = [
+            "table" => $table_1, 
+            "join" => $join,
+            "on" => $on,
+            "kind" => $joinKind ?? "LEFT JOIN"
+        ];
+        return $instance;
     }
 
 
@@ -95,35 +131,77 @@ abstract class Model
      */
     public static function get(bool $isGetOne = false)
     {
-        $model = self::getInstance();
-        if($model->isJoining)
+        $instance = self::getInstance();
+        $instance->isGetOne = $isGetOne;
+        if($instance->isJoining)
         {
-            $columns = $model::createSelectFieldsWithJoin();
-            $tables = $model::createTablesWithJoin();
+            [$tables, $columns] = $instance::createSelectFieldsWithJoin();
             $query = "SELECT {$columns} FROM {$tables}";
         }
         else
         {
-            $query = "SELECT * FROM " . $model::$name . " ";
+            $query = "SELECT * FROM " . $instance::$name . " ";
         }
 
-        if($model->isWhere)
+        if($instance->isWhere)
         {
-            $query .= $model::createWhere();
+            $query .= $instance::createWhere();
         }
-
         $res = self::$db->query($query);
+        $res = $instance->createFromResult($res);
+        // Resets the instances used
+        self::$instances = [];
+        return $res;
+    }
 
-        if($model->isJoining)
+    private static function addWith(Model &$object)
+    {
+        $instance = self::getInstance();
+        foreach($instance->with as $with)
         {
-            return array_map(fn($data) => self::createWithJoinedFields($data), $res);
+            $model = ucfirst($with["table"]);
+            $rows = $model::where($with["on"], $with["where"])::get();
+            $as = strtolower($with["table"]) . "s";
+            $object->$as = $rows;
+        }
+        return $object;
+    }
+
+    /**
+     * @param array $result The result from the query
+     * @return static[]|static result of the query. Array of models if many, otherwise a single model
+     */
+    private static function createFromResult(array $result)
+    {
+        $instance = self::getInstance();
+        if($instance->isJoining)
+        {
+            return array_map(fn($res) => self::createWithJoinedFields($res), $result);
         }
         else
         {
-            return array_map(fn($data) => self::create($data), $res);
+            $res = array_map(fn($res) => self::create($res), $result);
+            if($instance->isGetOne || $instance->isWith)  
+            {
+                $res = $instance::addWith($res[0]);
+            }
+            return $res;
         }
     }
 
+    public static function with(string $withModel, string $on, string $where): static
+    {
+        $instance = self::getInstance();
+        $instance->isWith = true;
+        $instance->isGetOne = true;
+        $instance->with[] = ["table" => $withModel, "on" => $on, "where" => $where];
+        return $instance;
+    }
+
+    /**
+     * @param int $id The id of the model to find
+     * @return static The model instance
+     */
     public static function find(int $id): static
     {
         $model = self::getInstance();
@@ -141,32 +219,31 @@ abstract class Model
         return array_map(fn($data) => $model::create($data), $result);
     }
 
-    private static function createTablesWithJoin()
+    /**
+     * @param string $table The table to join
+     * @return string The table with the joined columns aliased as "table_column"
+     */
+    private static function createAliasForJoinedColumns(string $table): string
     {
-        $instance = self::getInstance();
-        return $instance::$name . " " . implode(" ", $instance->join);
+        $columns = [...$table::$required, ...$table::$optional];
+        $columns = array_map(fn($column) => $table . "." . $column . " AS " . $table . "_" . $column, $columns);
+        return implode(", ", $columns);
     }
 
-    private static function createSelectFieldsWithJoin(): string
+    private static function createSelectFieldsWithJoin(): array
     {
         $instance = self::getInstance();
 
         $selectColumns = [];
-        foreach($instance->joinTables as $table)
+        foreach($instance->join as $join)
         {
-            $columns = [...$table::$required, ...$table::$optional];
-
-            $withUnderscore = array_map(fn($column) => $table . "." . $column . " AS " . $table . "_" . $column, $columns);
-            foreach($withUnderscore as $column)
-            {
-                $selectColumns[] = $column;
-            }
-
+            $joinFields[] = "{$join['kind']} {$join['table']} ON {$join['join']} = {$join['on']}";
+            $selectColumns[] = self::createAliasForJoinedColumns($join['table']);
         }
-        $mainColumns = [...$instance::$required, ...$instance::$optional];
-        $mainColumns = array_map(fn($column) => $instance::$name . "." . $column . " AS " . $column, $mainColumns);
-        $columns = implode(", ", [...$mainColumns, ...$selectColumns]);
-        return $columns;
+        // Prepends the main table to the select columns and join fields
+        array_unshift($selectColumns, $instance::$name . ".*");
+        array_unshift($joinFields, $instance::$name);
+        return [implode(" ", $joinFields), implode(", ", $selectColumns)];
     }
 
     private static function createWithJoinedFields(array $data): static
@@ -182,6 +259,7 @@ abstract class Model
         {
             $_model = ucfirst($_model);
             $isMainTable = $_model == $model::class;
+
             $prefix = $isMainTable ? "" : strtolower($_model) . "_";
             foreach($_model::$required as $column)
             {

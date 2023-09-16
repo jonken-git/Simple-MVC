@@ -10,5 +10,14 @@
             </ul>
         </li>
     <?php endif; ?>
+    <?php if (isset($user->comments)) : ?>
+        <li>Inlägg: 
+            <ul>
+                <?php foreach ($user->comments as $comment) : ?>
+                    <li><?= $comment->content ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </li>
+    <?php endif; ?>
 </ul>
 
