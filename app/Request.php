@@ -33,8 +33,6 @@ class Request
         $request = $getParamsStart === false ? $request : substr($request, 0, $getParamsStart);
         $request = explode("/", $request);
         $request = array_values(array_filter($request));
-        // dd($request);
-        // array_shift($request);
         if(in_array($request[0], self::$reservedEndpoints))
         {
             $request[2] = $request[1]; // Move param from endpoint name to param position

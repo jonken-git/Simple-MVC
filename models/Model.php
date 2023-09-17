@@ -154,12 +154,13 @@ abstract class Model
         return $res;
     }
 
-    private static function addWith(Model &$object)
+    private static function addWith(Model $object)
     {
         $instance = self::getInstance();
         foreach($instance->with as $with)
         {
             $model = ucfirst($with["table"]);
+            $with["where"] ??= $object->id;
             $rows = $model::where($with["on"], $with["where"])::get();
             $as = strtolower($with["table"]) . "s";
             $object->$as = $rows;
@@ -176,20 +177,25 @@ abstract class Model
         $instance = self::getInstance();
         if($instance->isJoining)
         {
-            return array_map(fn($res) => self::createWithJoinedFields($res), $result);
+            $res = array_map(fn($res) => self::createWithJoinedFields($res), $result);
         }
         else
         {
             $res = array_map(fn($res) => self::create($res), $result);
             if($instance->isGetOne || $instance->isWith)  
             {
-                $res = $instance::addWith($res[0]);
+                foreach($res as &$object)
+                {
+                    $object = self::addWith($object);
+                }
+                // $res = $instance::addWith($res[0]);
+                dd($res);
             }
             return $res;
         }
     }
 
-    public static function with(string $withModel, string $on, string $where): static
+    public static function with(string $withModel, string $on, string $where = null): static
     {
         $instance = self::getInstance();
         $instance->isWith = true;
