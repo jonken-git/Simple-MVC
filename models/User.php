@@ -17,9 +17,8 @@ class User extends Model
     protected static array $required = ["username", "email", "password"]; 
     protected static array $optional = ["id"];
 
-    public static function selectWithPosts(int $id): User
+    public function getFullName(): string
     {
-        return User::where("user.id = 1")
-            ::get();
+        return $this->username . " " . $this->email;
     }
 }

@@ -42,6 +42,11 @@ abstract class Model
         self::$db = Database::getInstance(); 
     }
 
+    /**
+     * Create single model from data
+     * @param array $data The data to create the model from
+     * @return static The model instance
+     */
     private static function create(array $data): static
     {
         $model = new static();
@@ -70,6 +75,7 @@ abstract class Model
         {
             $instance = new $class();
             self::$name = strtolower($instance::class);
+            $instance::$name = self::$name;
             self::$instances[$class] = $instance;
         }
         return self::$instances[$class];
@@ -151,15 +157,22 @@ abstract class Model
         $res = $instance->createFromResult($res);
         // Resets the instances used
         self::$instances = [];
-        return $res;
+        return $isGetOne ? $res[0] : $res;
     }
 
+    /**
+     * Heavy on the database, use with caution. 
+     * @param Model $object The object to add the children to
+     * @return Model The object with the children added
+     */
     private static function addWith(Model $object)
     {
         $instance = self::getInstance();
         foreach($instance->with as $with)
         {
+            /** @var static $model */
             $model = ucfirst($with["table"]);
+            // If not specified, the where clause is the id of the object
             $with["where"] ??= $object->id;
             $rows = $model::where($with["on"], $with["where"])::get();
             $as = strtolower($with["table"]) . "s";
@@ -188,13 +201,17 @@ abstract class Model
                 {
                     $object = self::addWith($object);
                 }
-                // $res = $instance::addWith($res[0]);
-                dd($res);
             }
             return $res;
         }
     }
 
+    /**
+     * @param string $withModel The child with relation to model
+     * @param string $on The column to join on
+     * @param string|null $where The where clause to use (default: id of model)
+     * @return static The model instance for chaining
+     */
     public static function with(string $withModel, string $on, string $where = null): static
     {
         $instance = self::getInstance();
@@ -216,6 +233,7 @@ abstract class Model
     }
 
     /**
+     * Returns all rows in the table as models
      * @return static[]
      */
     public static function all(): array
@@ -236,6 +254,9 @@ abstract class Model
         return implode(", ", $columns);
     }
 
+    /**
+     * @return array<string> The tables and columns to select as comma separated strings
+     */
     private static function createSelectFieldsWithJoin(): array
     {
         $instance = self::getInstance();
@@ -243,7 +264,7 @@ abstract class Model
         $selectColumns = [];
         foreach($instance->join as $join)
         {
-            $joinFields[] = "{$join['kind']} {$join['table']} ON {$join['join']} = {$join['on']}";
+            $joinFields[] = "{$join["kind"]} {$join["table"]} ON {$join["join"]} = {$join["on"]}";
             $selectColumns[] = self::createAliasForJoinedColumns($join['table']);
         }
         // Prepends the main table to the select columns and join fields
@@ -252,6 +273,12 @@ abstract class Model
         return [implode(" ", $joinFields), implode(", ", $selectColumns)];
     }
 
+    /**
+     * Creates a model from the result of a query with joined tables.
+     * The joined tables are aliased as "{table_name}_{column_name}"
+     * @param array $data The data to create the model from
+     * @return static The model instance
+     */
     private static function createWithJoinedFields(array $data): static
     {
         $model = new static();

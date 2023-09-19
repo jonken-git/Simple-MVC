@@ -11,7 +11,7 @@ class Users extends Controller
 
     public function profile(int $id) : void
     {
-        $user = User::with("comment", "user_id", $id)::with("post", "user_id", $id)::where("id", $id)::get();
+        $user = User::with("comment", "user_id", $id)::with("post", "user_id", $id)::where("id", $id)::get(true);
         $this->renderView(["user" => $user, "title" => "Profile"]);
     }
 

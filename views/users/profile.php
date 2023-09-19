@@ -1,6 +1,7 @@
 <ul>
     <li>ID: <?= $user->id ?></li>
     <li>Användarnamn: <?=  $user->username; ?></li>
+    <li>Fullnamn: <?= $user->getFullName() ?></li>
     <?php if (isset($user->posts)) : ?>
         <li>Inlägg: 
             <ul>

@@ -38,7 +38,7 @@ class Server
 
     private static function close(): void
     {
-        self::$instance = null;
+        unset(self::$instance);
         die();
     }
 

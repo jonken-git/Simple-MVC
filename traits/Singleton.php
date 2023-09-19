@@ -17,5 +17,5 @@ trait Singleton
         return self::createInstance();
     }
 
-    private static ?self $instance = null;
+    private static ?Server $instance = null;
 }
